@@ -4,12 +4,12 @@ const router = require('express').Router();
 // Importing modules
 const todoControllers = require('../controllers/todo-controllers');
 
-router.get('/add-task', async (req, res) => {
+router.post('/add-task', async (req, res) => {
     todoControllers.addTask(req, res);
 });
 
 router.put('/update-task', async (req, res) => {
-    todoControllers.removeTask(req, res);
+    todoControllers.updateTask(req, res);
 });
 
 router.delete('/remove-task', async (req, res) => {
