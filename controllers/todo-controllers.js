@@ -3,29 +3,29 @@ const Task = require('../models/todo-model');
 
 const addTask = async (req, res) => {
     try {
-        let task = await Task.findOne({title: req.body.title});
+        let task = await Task.findOne({
+            owner: req.id, 
+            title: req.body.title
+        });
 
-        if(!task) {
-            task = await new Task(req.body);
-            task.save();
+        if (!task) {
+            task = new Task({
+                ...req.body,
+                owner: req.id
+            });
+            await task.save();
 
-            res.send({
+            res.status(201).send({
                 message: "Task added successfully",
-                status: 201,
-                task_added: task
+                task
             });
         } else {
-            res.send({
-                message: "Task already present",
-                status: 400,
-                title: req.body.title
-            });
+            res.status(400).send({ message: "Task already exists" });
         }
 
     } catch(error) {
-        res.send({
+        res.status(400).send({
             message: "Failed to add the task",
-            status: 404,
             error
         });
     }
@@ -33,26 +33,35 @@ const addTask = async (req, res) => {
 
 const updateTask = async (req, res) => {
     try {
-        let task = await Task.updateOne({title: req.body.title}, req.body);
+        const task = await Task.findOneAndUpdate(
+            {
+                owner: req.id, 
+                title: req.body.title
+            }, 
+            {
+                ...req.body,
+                owner: req.id 
+            }, 
+            {
+                new : true
+            }
+        );
 
         if (task) {
-            res.send({
+            res.status(201).send({ 
                 message: "Task updated successfully",
-                status: 201,
-                title: req.body.title
+                task 
             });
         } else {
-            res.send({
+            res.status(406).send({
                 message: "Task not found, add a new one",
-                status: 406,
                 error
             });
         }
 
     } catch(error) {
-        res.send({
+        res.status(404).send({
             message: "Failed to update the task",
-            status: 404,
             error
         });
     }
@@ -60,27 +69,26 @@ const updateTask = async (req, res) => {
 
 const removeTask = async (req, res) => {
     try {
-        let task = await Task.deleteOne({title: req.body.title});
-        console.log(task);
+        let task = await Task.findOneAndDelete({
+            owner: req.id,
+            title: req.body.title
+        });
 
-        if (task.deletedCount == 1) {
-            res.send({
+        if (task) {
+            res.status(200).send({
                 message: "Task deleted successfully",
-                status: 200,
                 title: req.body.title
             });
-        } else if(task.deletedCount == 0) {
-            res.send({
+        } else {
+            res.status(410).send({
                 message: "Task already absent",
-                status: 410,
                 error
             });
         }
 
     } catch (error) {
-        res.send({
+        res.status(404).send({
             message: "Failed to delete the task",
-            status: 404,
             error
         });
     }
@@ -88,26 +96,21 @@ const removeTask = async (req, res) => {
 
 const readAllTasks = async (req, res) => {
     try {
-        let allTasks = await Task.find({});
+        const allTasks = await Task.find({ owner: req.id });
 
         if (allTasks.length > 0) {
-            res.send({
+            res.status(200).send({
                 message: "Sending all the tasks",
-                status: 200,
-                total_tasks: allTasks.length,
+                totalTasks: allTasks.length,
                 allTasks
             });
         } else {
-            res.send({
-                message: "No tasks found",
-                status: 410,
-            });
+            res.status(410).send({ message: "No tasks found" });
         }
 
     } catch(error) {
-        res.send({
+        res.status(404).send({
             message: "Failed to fetch the tasks",
-            status: 404,
             error
         });
     }
@@ -115,24 +118,17 @@ const readAllTasks = async (req, res) => {
 
 const removeAllTasks = async (req, res) => {
     try {
-        let task = await Task.deleteMany({});
+        const task = await Task.deleteMany({ owner: req.id });
 
-        if (task) {
-            res.send({
-                message: "All the task are deleted",
-                status: 200,
-            });
+        if (task.deletedCount) {
+            res.status(200).send({ message: "All the task are removed" });
         } else {
-            res.send({
-                message: "No tasks found to remove",
-                status: 410
-            });
+            res.status(410).send({ message: "No tasks found to remove" });
         }
 
     } catch (error) {
-        res.send({
+        res.status(404).send({
             message: "Failed to delete the tasks",
-            status: 404,
             error
         });
     }

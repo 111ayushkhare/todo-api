@@ -5,16 +5,20 @@ const taskSchema = new mongoose.Schema({
     title : {
         type: String,
         required: true,
-        unique: true
     }, 
     body: String,
     completed: {
         type: Boolean,
-        required: true
+        default: false
     },
     date: {
         type: Date,
         default: Date.now
+    },
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
     }
 });
 
